@@ -31,51 +31,53 @@ end
 % (1)
 filtro = inicializar(n);
 
-U1 = cell(1, m);
-for i = 1:m
-    U1{i} = ['palavra' num2str(i)]; 
+% Palavras associadas a discurso de ódio
+agressividade = {'ofensa1', 'insulto2', 'grupoX', 'grupoY', 'pessoaZ'};
+
+for i = 1:length(agressividade)
+    filtro = adicionarElemento(filtro, agressividade{i}, k);
 end
 
-for i = 1:m
-    filtro = adicionarElemento(filtro, U1{i}, k);
-end
+% (2) Analisar se novos textos contêm palavras associadas a agressividade
+textos = {
+    'Esta é uma mensagem inofensiva.',
+    'Mensagem com ofensa1 direcionada ao grupoX.',
+    'Outro texto sem problemas.',
+    'Alguém mencionou grupoY e insulto2 aqui.'
+};
 
-% (2) 
-is_member = true;
-for i = 1:m
-    if ~membro(filtro, U1{i}, k)
-        disp(['Palavra não encontrada no filtro: ' U1{i}]);
-        is_member = false;
+for i = 1:length(textos)
+    disp(['Analisando texto ', num2str(i), ': ', textos{i}]);
+    
+    % Tokenizar o texto em palavras
+    palavras = strsplit(lower(textos{i}), {' ', '.', ','});
+    
+    % Verificar palavras no filtro
+    encontrou_agressividade = false;
+    for j = 1:length(palavras)
+        if membro(filtro, palavras{j}, k)
+            disp(['-> Palavra agressiva encontrada: ', palavras{j}]);
+            encontrou_agressividade = true;
+        end
+    end
+    
+    if ~encontrou_agressividade
+        disp('-> Nenhuma palavra agressiva encontrada.');
     end
 end
 
-if is_member
-    disp('Todas as palavras foram corretamente adicionadas ao filtro!');
-else
-    disp('Algumas palavras não foram corretamente verificadas no filtro.');
-end
-
-
-% (3)
-U2 = cell(1, 100000); 
-for i = 1:100000
-    U2{i} = ['palavra' num2str(i + m)];
-end
-
-falsos_positivos = 0;
-for i = 1:length(U2)
-    if membro(filtro, U2{i}, k)  
-        falsos_positivos = falsos_positivos + 1;
+% (3) Estatísticas
+% Exemplo: determinar a percentagem de textos com palavras agressivas
+total_agressivos = 0;
+for i = 1:length(textos)
+    palavras = strsplit(lower(textos{i}), {' ', '.', ','});
+    for j = 1:length(palavras)
+        if membro(filtro, palavras{j}, k)
+            total_agressivos = total_agressivos + 1;
+            break;
+        end
     end
 end
 
-percentagem_falsos_positivos = (falsos_positivos / length(U2)) * 100;
-disp(['Percentagem de falsos positivos: ', num2str(percentagem_falsos_positivos), '%']);
-
-% (4)
-P_falsos_positivos_estimado = (1 - exp(-k * m / n))^k;
-disp(['Estimativa teórica de falsos positivos: ', num2str(P_falsos_positivos_estimado * 100), '%']);
-
-
-% só para ver se os professores vêm isto, caso veja este comentário mande
-% email para alexandreandre@ua.pt a dizer "Eu vi"
+percentagem_agressivos = (total_agressivos / length(textos)) * 100;
+disp(['Percentagem de textos com agressividade identificada: ', num2str(percentagem_agressivos), '%']);
