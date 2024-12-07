@@ -48,14 +48,15 @@ disp(['Predicted class: ', char(predictedClass)]);
 
 %Funcoes helper
 % Pre processar texto e verificar o bloom filter
+% Responsável por limpar e processar o texto
 function cleanText = preprocessText(text, filtro, k)
-    text = lower(text);
-    text = regexprep(text, '[^\w\s]', '');
+    text = lower(text);                                                             % passa para minusculas
+    text = regexprep(text, '[^\w\s]', '');                                          % remove a pontuação
     stopWords = ["i", "the", "at", "on", "and", "of", "to", "a", "in", "it"];
-    words = setdiff(strsplit(text), stopWords);
+    words = setdiff(strsplit(text), stopWords);                                     % remove stopwords (palavras que não acrescentam muito significado a uma frase)                                                                            
     
     % Verificar se as palavras estao no bloom filter
-    is_aggressive = any(cellfun(@(word) membro(filtro, word, k), words));
+    is_aggressive = any(cellfun(@(word) membro(filtro, word, k), words));           % se o bloom filter indicar agressividade, marca o texto como agressivo
     
     if is_aggressive
         cleanText = '';  % Se for agressive return vazio
@@ -64,6 +65,8 @@ function cleanText = preprocessText(text, filtro, k)
     end
 end
 
+
+% Cria um vocabulario unico de todas as palavras nos textos
 function vocabulary = buildVocabulary(cleanTexts)
     allWords = {};
     totalWords = 0;
@@ -73,7 +76,7 @@ function vocabulary = buildVocabulary(cleanTexts)
         totalWords = totalWords + length(strsplit(cleanTexts{i}));
     end
     
-    % Pre aallocar espaco para o allWords 
+    % Pre alocar espaco para o allWords 
     allWords = cell(1, totalWords);
     currentIndex = 1;
     
@@ -89,6 +92,7 @@ function vocabulary = buildVocabulary(cleanTexts)
     vocabulary = unique(allWords);
 end
 
+% Cria uma matriz binária que indica a presença ou ausencia de palavras 
 function wordCounts = countWordOccurrencesBinary(cleanTexts, vocabulary)
     wordCounts = zeros(length(cleanTexts), length(vocabulary));
     
@@ -100,7 +104,9 @@ function wordCounts = countWordOccurrencesBinary(cleanTexts, vocabulary)
     end
 end
 
+
 % Bloom filter
+% Usado para verificar se a palavra está associado a um discurso agressivo
 function filtro = inicializar(n)
     filtro = zeros(1, n); % Initialize filter with zeros
 end
