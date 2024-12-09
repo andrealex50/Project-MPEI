@@ -49,7 +49,6 @@ cleanNewText = preprocessText(newText); % Pré-processar novo texto
 newX = countWordOccurrencesBinary({cleanNewText}, vocabulary); % Contar ocorrências binárias no novo texto
 predictedClass = predict(Mdl, newX); % Prever classe do novo texto
 
-% Exibir classe prevista para o novo texto
 disp(['Predicted class: ', char(predictedClass)]);
 
 % Função para pré-processar textos: converter para minúsculas, remover pontuação e stop words
