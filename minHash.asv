@@ -1,0 +1,89 @@
+function minHash(vetor_binario, hashe_treino)
+
+    if ~isvector(vetor_binario) || ~all(ismember(vetor_binario, [0, 1]))
+        error('O vetor binário deve conter apenas 0s e 1s.');
+    end
+
+    % Carregar o arquivo mensagens.csv
+    mensagens_suspeitas = readcell('mensagens.csv', 'Delimiter', ',');
+    
+    shingles_size = 3; % Tamanho dos shingles
+    k = size(hashes_treino, 2); % Número de funções de dispersão
+
+    % Filtrar as mensagens com base no vetor binário
+    mensagens_interessantes = mensagens_suspeitas(logical(vetor_binario), 1);
+
+    num_mensagens = length(mensagens_interessantes);
+    assinaturas = zeros(num_mensagens, k); % Assinaturas MinHash para cada mensagem
+
+    % Processar cada mensagem
+    for idx = 1:num_mensagens
+        texto_mensagem = mensagens_suspeitas{idx, 1}; % Texto da mensagem
+        if ischar(texto_mensagem) || isstring(texto_mensagem)
+            texto_mensagem = lower(char(texto_mensagem)); % Normalizar o texto
+            
+            % Gerar shingles
+            shingles = gerar_shingles(texto_mensagem, shingles_size);
+            
+            % Criar vocabulário para shingles
+            vocabulario = unique(shingles);
+            
+            % Criar o vetor binário
+            vetor_binario = zeros(1, length(vocabulario));
+            for i = 1:length(vocabulario)
+                if ismember(vocabulario{i}, shingles)
+                    vetor_binario(i) = 1;
+                end
+            end
+
+            %% MinHash
+            assinaturas(idx, :) = calcular_minHash(vetor_binario, k);
+            
+            % Calcular similaridade entre assinaturas geradas e os hashes de treino
+            similaridades = zeros(num_mensagens, size(hashes_treino, 1));
+            for i = 1:num_mensagens
+                for j = 1:size(hashes_treino, 1)
+                    similaridades(i, j) = calcular_similaridade(assinaturas(i, :), hashes_treino(j, :));
+                end
+            end
+        end
+    end
+end
+
+% Função para gerar shingles
+function shingles = gerar_shingles(texto, tamanho_shingle)
+    n = length(texto);
+    shingles = cell(1, n - tamanho_shingle + 1);
+    for i = 1:(n - tamanho_shingle + 1)
+        shingles{i} = texto(i:i + tamanho_shingle - 1);
+    end
+end
+
+% Função para calcular assinaturas MinHash
+function assinaturas = calcular_minHash(vetor_binario, k)
+    % Número de shingles
+    n = length(vetor_binario);
+
+    % Inicializar assinaturas com infinito
+    assinaturas = inf(1, k);
+
+    % Funções de dispersão
+    prime = 2147483647; 
+    a = randi([1, prime-1], 1, k); 
+    b = randi([0, prime-1], 1, k); 
+
+    % Percorrer cada posição do vetor binário
+    for i = 1:n
+        if vetor_binario(i) == 1 % Se o valor for 0, não tem shingle
+            for j = 1:k
+                hash_value = mod(mod(a(j) * i + b(j), prime), n);
+                assinaturas(j) = min(assinaturas(j), hash_value); % Atualizar assinatura
+            end
+        end
+    end
+end
+
+% Função para calcular similaridade entre assinaturas
+function similaridade = calcular_similaridade(assinatura1, assinatura2)
+    similaridade = sum(assinatura1 == assinatura2) / length(assinatura1);
+end
