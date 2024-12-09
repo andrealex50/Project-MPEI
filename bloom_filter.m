@@ -62,7 +62,7 @@ for i = 1:length(textos)
     end
     
     if ~encontrou_agressividade
-        disp('-> Nenhuma palavra agressiva encontrada.');
+        disp('-> Palavra suspeita');
     end
 end
 
