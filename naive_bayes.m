@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 % Leitura dos dados do arquivo CSV
 opts = detectImportOptions('labeled_data.csv', 'VariableNamingRule', 'preserve');
 data = readtable('labeled_data.csv', opts);
@@ -52,43 +51,6 @@ predictedClass = predict(Mdl, newX); % Prever classe do novo texto
 
 % Exibir classe prevista para o novo texto
 disp(['Predicted class: ', char(predictedClass)]);
-=======
-function naive_bayes()
-    % Leitura dos dados do arquivo CSV
-    opts = detectImportOptions('labeled_data.csv', 'VariableNamingRule', 'preserve');
-    data = readtable('labeled_data.csv', opts);
-    
-    % Verificar nomes das colunas
-    disp(data.Properties.VariableNames);
-    
-    % Converter a coluna de textos em um cell array
-    texts = data.tweet;
-    
-    % Converter a coluna de classes em um array
-    labels = data.class;
-    
-    % Mapear classes para categorias
-    mappedLabels = cell(size(labels));
-    mappedLabels(labels == 0) = {'aggressive'}; % 'hate' é 'aggressive'
-    mappedLabels(labels == 1) = {'aggressive'}; % 'offensive' é 'aggressive'
-    mappedLabels(labels == 2) = {'non-aggressive'}; % 'neither' é 'non-aggressive'
-    
-    cleanTexts = cellfun(@(x) preprocessText(x), texts, 'UniformOutput', false);
-    vocabulary = buildVocabulary(cleanTexts);
-    X = countWordOccurrencesBinary(cleanTexts, vocabulary);
-    
-    Y = categorical(mappedLabels);
-    Mdl = fitcnb(X, Y, 'Distribution', 'mn');
-    
-    % Testar novo texto
-    newText = 'I like you';  
-    cleanNewText = preprocessText(newText);
-    newX = countWordOccurrencesBinary({cleanNewText}, vocabulary);  
-    predictedClass = predict(Mdl, newX);
-    
-    disp(['Predicted class: ', char(predictedClass)]);
-end
->>>>>>> Stashed changes
 
 % Função para pré-processar textos: converter para minúsculas, remover pontuação e stop words
 function cleanWords = preprocessText(text)
