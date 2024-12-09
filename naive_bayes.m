@@ -12,8 +12,12 @@ mappedLabels(labels == 0) = {'aggressive'}; % Classe 0 é 'aggressive'
 mappedLabels(labels == 1) = {'aggressive'}; % Classe 1 é 'aggressive'
 mappedLabels(labels == 2) = {'non-aggressive'}; % Classe 2 é 'non-aggressive'
 
-% Pré-processar os textos para limpeza e normalização
-cleanTexts = cellfun(@(x) preprocessText(x), texts, 'UniformOutput', false);
+% Inicializar cell array para textos pré-processados 
+cleanTexts = cell(size(texts)); 
+% Loop para pré-processar cada texto 
+for i = 1:length(texts) 
+    cleanTexts{i} = preprocessText(texts{i});
+end
 
 % Construir um vocabulário único a partir dos textos pré-processados
 vocabulary = buildVocabulary(cleanTexts);
