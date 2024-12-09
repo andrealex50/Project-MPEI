@@ -1,27 +1,30 @@
-% Samples
-texts = {
-    'You are an idiot';    
-    'I am so angry at you'; 
-    'This is nice';        
-    'You did a great job'; 
-    'I love you';          
-    'I hate you';          
-    'You are amazing';     
-    'I will hurt you now'; 
-    'Good job, well done'; 
-    'Why are you so dumb?' 
-};
+% Leitura dos dados do arquivo CSV
+opts = detectImportOptions('labeled_data.csv', 'VariableNamingRule', 'preserve');
+data = readtable('labeled_data.csv', opts);
 
-labels = {'aggressive', 'aggressive', 'non-aggressive', 'non-aggressive', 'non-aggressive', ...
-          'aggressive', 'non-aggressive', 'aggressive', 'non-aggressive', 'aggressive'};
+% Verificar nomes das colunas
+disp(data.Properties.VariableNames);
+
+% Converter a coluna de textos em um cell array
+texts = data.tweet;
+
+% Converter a coluna de classes em um array
+labels = data.class;
+
+% Mapear classes para categorias
+mappedLabels = cell(size(labels));
+mappedLabels(labels == 0) = {'aggressive'}; % 'hate' é 'aggressive'
+mappedLabels(labels == 1) = {'aggressive'}; % 'offensive' é 'aggressive'
+mappedLabels(labels == 2) = {'non-aggressive'}; % 'neither' é 'non-aggressive'
 
 cleanTexts = cellfun(@(x) preprocessText(x), texts, 'UniformOutput', false);
 vocabulary = buildVocabulary(cleanTexts);
 X = countWordOccurrencesBinary(cleanTexts, vocabulary);
 
-Y = categorical(labels);
+Y = categorical(mappedLabels);
 Mdl = fitcnb(X, Y, 'Distribution', 'mn');
 
+% Testar novo texto
 newText = 'I like you';  
 cleanNewText = preprocessText(newText);
 newX = countWordOccurrencesBinary({cleanNewText}, vocabulary);  
@@ -29,10 +32,7 @@ predictedClass = predict(Mdl, newX);
 
 disp(['Predicted class: ', char(predictedClass)]);
 
-
-
-
-% Funcoes que sao utlizadas em cima
+% Funções que são utilizadas em cima
 function cleanText = preprocessText(text)
     text = lower(text);
     text = regexprep(text, '[^\w\s]', '');
@@ -45,12 +45,12 @@ function vocabulary = buildVocabulary(cleanTexts)
     allWords = {};
     totalWords = 0;
     
-    % Contar numero de palavras
+    % Contar número de palavras
     for i = 1:length(cleanTexts)
         totalWords = totalWords + length(strsplit(cleanTexts{i}));
     end
     
-    % Pre alocar espac para o allwords baseado no numero de palavras
+    % Pre alocar espaço para o allWords baseado no número de palavras
     allWords = cell(1, totalWords);
     currentIndex = 1;
     
@@ -62,7 +62,6 @@ function vocabulary = buildVocabulary(cleanTexts)
         end
     end
     
-
     vocabulary = unique(allWords);
 end
 
