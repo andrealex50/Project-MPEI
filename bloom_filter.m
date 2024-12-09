@@ -40,9 +40,9 @@ end
 
 % (2) Analisar se novos textos contêm palavras associadas a agressividade
 textos = {
-    'Esta é uma mensagem inofensiva.',
-    'Mensagem com ofensa1 direcionada ao grupoX.',
-    'Outro texto sem problemas.',
+    'Esta é uma mensagem inofensiva.';
+    'Mensagem com ofensa1 direcionada ao grupoX.';
+    'Outro texto sem problemas.';
     'Alguém mencionou grupoY e insulto2 aqui.'
 };
 

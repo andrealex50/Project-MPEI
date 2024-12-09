@@ -14,6 +14,7 @@ mappedLabels(labels == 2) = {'non-aggressive'}; % Classe 2 é 'non-aggressive'
 
 % Inicializar cell array para textos pré-processados 
 cleanTexts = cell(size(texts)); 
+
 % Loop para pré-processar cada texto 
 for i = 1:length(texts) 
     cleanTexts{i} = preprocessText(texts{i});
@@ -93,11 +94,15 @@ end
 function wordCounts = countWordOccurrencesBinary(cleanTexts, vocabulary)
     wordCounts = zeros(length(cleanTexts), length(vocabulary)); % Inicializar matriz binária
     
+    h = waitbar(0, 'Counting word occurences...');
     % Contar presença ou ausência de palavras do vocabulário em cada texto
     for i = 1:length(cleanTexts)
         wordsInDoc = cleanTexts{i};
         for j = 1:length(vocabulary)
             wordCounts(i, j) = any(strcmp(wordsInDoc, vocabulary{j})); % Marcar presença da palavra
         end
+
+        waitbar(i/ length(cleanTexts), h);
     end
+    close(h);
 end
