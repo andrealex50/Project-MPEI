@@ -34,27 +34,39 @@ mappedLabels(labels == 0) = {'non-aggressive'};
 % Convert mapped labels to categorical array
 Y = categorical(mappedLabels);
 
-% Debugging: Ensure labels are correctly mapped
-disp('Unique categories in Y:');
-disp(categories(Y));
-
 % Preprocess texts
 cleanTexts = cell(size(texts));
 for i = 1:length(texts)
     cleanTexts{i} = preprocessText(texts{i});
 end
 
+% Handle negations
+cleanTexts = handleNegations(cleanTexts);
+
 % Build vocabulary from preprocessed texts
 vocabulary = buildVocabulary(cleanTexts);
 
-% Create a binary word occurrence matrix
-X = countWordOccurrencesBinary(cleanTexts, vocabulary);
+% Create a word occurrence matrix with Laplace smoothing
+wordCounts = countWordOccurrences(cleanTexts, vocabulary);
+wordCounts = wordCounts + 1; % Add Laplace smoothing
 
-% Split data into training and testing sets
-cv = cvpartition(Y, 'Holdout', 0.2);
-XTrain = X(training(cv), :);
+% Calculate P(c_j) terms
+totalDocuments = length(Y);
+classAggressive = sum(Y == 'aggressive');
+classNonAggressive = sum(Y == 'non-aggressive');
+P_aggressive = classAggressive / totalDocuments;
+P_nonAggressive = classNonAggressive / totalDocuments;
+
+% Calculate P(w_k | c_j) terms with Laplace smoothing
+alpha = 1; % Smoothing parameter
+vocabSize = length(vocabulary);
+P_word_given_aggressive = (wordCounts + alpha) ./ (sum(wordCounts, 2) + alpha * vocabSize);
+
+% Split data into 70% training and 30% testing sets
+cv = cvpartition(Y, 'Holdout', 0.3);
+XTrain = wordCounts(training(cv), :);
 YTrain = Y(training(cv));
-XTest = X(test(cv), :);
+XTest = wordCounts(test(cv), :);
 YTest = Y(test(cv));
 
 % Train the Naive Bayes model
@@ -75,20 +87,40 @@ fprintf('Recall: %.2f\n', recall);
 fprintf('F1 Score: %.2f\n', f1Score);
 
 % Test with a new text
-newText = 'I fucking hate you';
+newText = 'I dont want to hurt you but if necessary i will';
 cleanNewText = preprocessText(newText);
-newX = countWordOccurrencesBinary({cleanNewText}, vocabulary);
+cleanNewText = handleNegations({cleanNewText});
+newX = countWordOccurrences({cleanNewText}, vocabulary) + 1; % Apply Laplace smoothing to new data
 predictedClass = predict(Mdl, newX);
 
 disp(['Predicted class: ', char(predictedClass)]);
 
 % --- Functions ---
-% Function to preprocess text: lowercase, remove punctuation, and stop words
+% Function to preprocess text: lowercase, remove punctuation, stop words, and URLs
 function cleanWords = preprocessText(text)
     text = lower(text); % Convert to lowercase
-    text = regexprep(text, '[^\w\s]', ''); % Remove punctuation
+    text = regexprep(text, 'http[s]?://\S+|www\.\S+', ''); % Remove URLs
+    text = regexprep(text, '[^\w\s]', ''); % Remove punctuation and special characters
     stopWords = ["i", "the", "at", "on", "and", "of", "to", "a", "in", "it"];
     cleanWords = setdiff(strsplit(text), stopWords); % Remove stop words and split into words
+end
+
+% Function to handle negations
+function cleanTexts = handleNegations(cleanTexts)
+    negationWords = ["not", "no", "never", "none"];
+    for i = 1:length(cleanTexts)
+        words = cleanTexts{i};
+        hasNegation = false;
+        for j = 1:length(words)
+            if ismember(words{j}, negationWords)
+                hasNegation = true;
+            elseif hasNegation
+                words{j} = ['not_' words{j}];
+                hasNegation = false;
+            end
+        end
+        cleanTexts{i} = words;
+    end
 end
 
 % Function to build a vocabulary from the preprocessed texts
@@ -97,14 +129,14 @@ function vocabulary = buildVocabulary(cleanTexts)
     vocabulary = unique(allWords); % Get unique words
 end
 
-% Function to create a binary word occurrence matrix
-function wordCounts = countWordOccurrencesBinary(cleanTexts, vocabulary)
+% Function to create a word occurrence matrix
+function wordCounts = countWordOccurrences(cleanTexts, vocabulary)
     wordCounts = zeros(length(cleanTexts), length(vocabulary));
     h = waitbar(0, 'Counting word occurrences...');
     for i = 1:length(cleanTexts)
         wordsInDoc = cleanTexts{i};
         for j = 1:length(vocabulary)
-            wordCounts(i, j) = any(strcmp(wordsInDoc, vocabulary{j}));
+            wordCounts(i, j) = sum(strcmp(wordsInDoc, vocabulary{j}));
         end
         waitbar(i / length(cleanTexts), h);
     end
