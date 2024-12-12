@@ -1,4 +1,4 @@
-function resultados = bloom_filter()
+function resultados = bloom_filter(mensagens_suspeitas)
     n = 8000;   % número de bits do filtro
     m = 100;    % número de elementos do conjunto
     k = 3;      % número de funções de dispersão  
@@ -13,7 +13,7 @@ function resultados = bloom_filter()
     end
     
     % (2) Carregar os textos (mensagens) para análise
-    textos = readFile('mensagens.txt'); % Substitua com o caminho do seu arquivo
+    textos = readFile(mensagens_suspeitas); % Substitua com o caminho do seu arquivo
      
     resultados = zeros(1, length(textos));
 
