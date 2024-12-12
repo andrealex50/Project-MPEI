@@ -1,8 +1,9 @@
-function minHash(vetor_binario, mensagens, mensagens_treino)
+function mensagens_sem_similaridade = minHash(vetor_binario, mensagens, mensagens_treino)
 
     % Carregar os arquivos
     mensagens_suspeitas = readcell(mensagens, 'Delimiter', ',');
     mensagens_treino = readcell(mensagens_treino, 'Delimiter', ',');
+    limiar_similaridade = 0.2;
 
     k = 100; % Número de funções de dispersão
 
@@ -51,9 +52,16 @@ function minHash(vetor_binario, mensagens, mensagens_treino)
 
     % Calcular similaridade entre assinaturas suspeitas e de treino
     similaridades = zeros(num_mensagens, num_treino);
+    mensagens_sem_similaridade = {};
     for i = 1:num_mensagens
         for j = 1:num_treino
-            similaridades(i, j) = calcular_similaridade(assinaturas_suspeitas(i, :), assinaturas_treino(j, :));
+            similaridade = calcular_similaridade(assinaturas_suspeitas(i, :), assinaturas_treino(j, :));
+            similaridades(i, j) = similaridade;
+            if similaridade < limiar_similaridade
+                % Se a similaridade for abaixo do limiar, adicionar à lista de mensagens sem similaridade
+                mensagens_sem_similaridade{end+1} = mensagens_interessantes{i};
+                break; 
+            end
         end
     end
 
