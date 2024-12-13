@@ -2,7 +2,7 @@ function mensagens_sem_similaridade = minHash(vetor_binario, mensagens, mensagen
 
     % Carregar os arquivos
     mensagens_suspeitas = readcell(mensagens, 'Delimiter', ',');
-    mensagens_treino = readcell(mensagens_treino, 'Delimiter', ',');
+    mensagens_treino = readcell(mensagens_treino, 'Delimiter', ',');  %%%%%Falta alterer isto para ler os dados do ficheiro json so com textos agressivos: aggressive_texts.json
     limiar_similaridade = 0.2;
 
     k = 100; % Número de funções de dispersão
