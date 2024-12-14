@@ -1,24 +1,19 @@
-function mensagens_sem_similaridade = minHash(vetor_binario, mensagens, mensagens_treino)
-
+function mensagens_sem_similaridade = minHash(mensagens, caminho_json_treino)
     % Carregar os arquivos
-    mensagens_suspeitas = readcell(mensagens, 'Delimiter', ',');
     % Ler o arquivo JSON contendo as mensagens de treino
-    json_data = fileread(mensagens_treino);
+    json_data = fileread(caminho_json_treino);
     mensagens_treino_struct = jsondecode(json_data);
     mensagens_treino = {mensagens_treino_struct.content}'; % Extrair os textos das mensagens
-    
+
     limiar_similaridade = 0.5;
 
     k = 100; % Número de funções de dispersão
 
-    % Filtrar as mensagens com base no vetor binário
-    mensagens_interessantes = mensagens_suspeitas(logical(vetor_binario), 1);
-
     % Gerar assinaturas para mensagens suspeitas
-    num_mensagens = length(mensagens_interessantes);
+    num_mensagens = length(mensagens);
     assinaturas_suspeitas = zeros(num_mensagens, k);
     for idx = 1:num_mensagens
-        texto_mensagem = mensagens_interessantes{idx};
+        texto_mensagem = mensagens{idx};
         if ischar(texto_mensagem) || isstring(texto_mensagem)
             texto_mensagem = lower(char(texto_mensagem)); % Normalizar o texto
 
@@ -35,10 +30,10 @@ function mensagens_sem_similaridade = minHash(vetor_binario, mensagens, mensagen
     end
 
     % Gerar assinaturas para mensagens de treino
-    num_treino = size(mensagens_treino, 1);
+    num_treino = length(mensagens_treino);
     assinaturas_treino = zeros(num_treino, k);
     for idx = 1:num_treino
-        texto_mensagem = mensagens_treino{idx, 1};
+        texto_mensagem = mensagens_treino{idx};
         if ischar(texto_mensagem) || isstring(texto_mensagem)
             texto_mensagem = lower(char(texto_mensagem)); % Normalizar o texto
 
@@ -63,14 +58,14 @@ function mensagens_sem_similaridade = minHash(vetor_binario, mensagens, mensagen
             similaridades(i, j) = similaridade;
             if similaridade < limiar_similaridade
                 % Se a similaridade for abaixo do limiar, adicionar à lista de mensagens sem similaridade
-                mensagens_sem_similaridade{end+1} = mensagens_interessantes{i};
+                mensagens_sem_similaridade{end+1} = mensagens{i};
                 break; 
             end
         end
     end
 
     % Exibir resultados
-    disp('Similaridades entre mensagens filtradas e mensagens de treino:');
+    disp('Similaridades entre mensagens analisadas e mensagens de treino:');
     disp(similaridades);
 end
 
