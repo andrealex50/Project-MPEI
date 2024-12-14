@@ -1,10 +1,13 @@
-function minHash(vetor_binario, mensagens, mensagens_treino)
+function mensagens_sem_similaridade = minHash(vetor_binario, mensagens, mensagens_treino)
 
     % Carregar os arquivos
     mensagens_suspeitas = readcell(mensagens, 'Delimiter', ',');
-    mensagens_treino = readcell(mensagens_treino, 'Delimiter', ',');
-
     
+    limiar_similaridade = 0.5;
+    % Ler o arquivo JSON contendo as mensagens de treino
+    json_data = fileread("aggressive_texts.json");
+    mensagens_treino_struct = jsondecode(json_data);
+    mensagens_treino = {mensagens_treino_struct.content}'; % Extrair os textos das mensagens
     k = 100; % Número de funções de dispersão
 
     % Filtrar as mensagens com base no vetor binário
