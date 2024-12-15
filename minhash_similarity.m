@@ -1,4 +1,4 @@
-function not_similar_messages = analyze_messages(messages_to_analyze, json_filename)
+function not_similar_messages = minhash_similarity(messages_to_analyze, json_filename)
     % Shingle length (n-grams)
     shingle_length = 2;  % For example, create 2-grams
 
