@@ -5,9 +5,9 @@ function mensagens_sem_similaridade = minHash(mensagens, caminho_json_treino)
     mensagens_treino_struct = jsondecode(json_data);
     mensagens_treino = {mensagens_treino_struct.content}'; % Extrair os textos das mensagens
 
-    limiar_similaridade = 0.5;
+    limiar_similaridade = 0.70;
 
-    k = 100; % Número de funções de dispersão
+    k = 250; % Número de funções de dispersão
 
     % Gerar assinaturas para mensagens suspeitas
     num_mensagens = length(mensagens);
@@ -51,16 +51,24 @@ function mensagens_sem_similaridade = minHash(mensagens, caminho_json_treino)
 
     % Calcular similaridade entre assinaturas suspeitas e de treino
     similaridades = zeros(num_mensagens, num_treino);
+    mensagens_com_similaridade = {};
     mensagens_sem_similaridade = {};
     for i = 1:num_mensagens
+        similaridade_encontrada = false;
         for j = 1:num_treino
             similaridade = calcular_similaridade(assinaturas_suspeitas(i, :), assinaturas_treino(j, :));
             similaridades(i, j) = similaridade;
-            if similaridade < limiar_similaridade
-                % Se a similaridade for abaixo do limiar, adicionar à lista de mensagens sem similaridade
-                mensagens_sem_similaridade{end+1} = mensagens{i};
+            if similaridade > limiar_similaridade
+                disp(similaridade)
+                % Se a similaridade for acima do limiar, adicionar à lista de mensagens com similaridade
+                mensagens_com_similaridade{end+1} = mensagens{i};
+                similaridade_encontrada = true;
                 break; 
             end
+        end
+
+        if ~similaridade_encontrada
+            mensagens_sem_similaridade{end+1} = mensagens{i};
         end
     end
 
@@ -71,7 +79,12 @@ end
 
 % Função para gerar shingles
 function shingles = gerar_shingles(texto)
-    shingles = split(texto, ' ');
+    stopwords = {'and', 'the', 'a', 'of', 'that', 'to', 'with', 'is', 'in', 'for', 'on', 'it', 'as', 'are', 'was', 'by', 'at', '.', ','};
+    texto = lower(texto);
+    words = split(texto);
+
+    filtered_words = words(~ismember(words, stopwords));
+    shingles = filtered_words;
 end
 
 % Função para calcular assinaturas MinHash

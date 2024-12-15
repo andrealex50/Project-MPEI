@@ -1,13 +1,13 @@
 function agressividade()
 
-    mensagens_a_analisar = 'mensagens.txt';  % Mensagens no geral, ficheiro principal
+    mensagens_a_analisar = 'DataSets/mensagens.txt';  % Mensagens no geral, ficheiro principal
     disp("---Bloom Filter---");
     % (1) Bloom Filter
     mensagens_possiveis = bloom_filter(mensagens_a_analisar); % Chama a função bloom_filter que retorna o vetor binário
 
     disp("---MinHash---");
     % (2) minHash
-    mensagens_treino = 'aggressive_texts.json';    % Mensagens que só contém asneiras
+    mensagens_treino = 'DataSets/aggressive_texts.json';    % Mensagens que só contém asneiras
     mensagens_sem_similaridade = minHash(mensagens_possiveis, mensagens_treino);   % Retorna mensagens que não encontraram similaridade
 
     disp("---Naive Bayes---");

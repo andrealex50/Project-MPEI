@@ -1,10 +1,9 @@
 function mensagens_suspeitas = bloom_filter(mensagens_analisar)
-    asneiras = readFile('en.txt');
+    asneiras = readFile('DataSets/en.txt');
     
     m = length(asneiras);        % número de linhas do en.txt
     p_fp = 0.01;    % probabilidade desejada de falsos positivos
     n = ceil((-m * log(p_fp)) / (0.693^2));   % número de bits do filtro
-    n = 2^nextpow2(n);      % para melhor eficiência computacional
     k = round((n * 0.693) / m);      % número de funções de dispersão  
 
     % (1)
@@ -27,24 +26,38 @@ function mensagens_suspeitas = bloom_filter(mensagens_analisar)
         disp(['Analisando texto ', num2str(i), ': ', textos{i}]);
         
         % Tokenizar o texto em palavras
-        palavras = strsplit(lower(textos{i}), {' ', '.', ','});
-        
+        palavras = lower(textos{i}); % Coloca tudo em minúsculas
+        palavras = regexprep(palavras, '[^\w\s-]', ''); % Remove qualquer pontuação
+        palavras_individuais = strsplit(palavras);
+
         % Verificar palavras no filtro
         encontrou_agressividade = false;
-        for j = 1:length(palavras)
-            if membro(filtro, palavras{j}, k)
-                disp(['-> Palavra agressiva encontrada: ', palavras{j}]);
+         % Verificar frases compostas no filtro
+        for j = 1:length(asneiras)
+            if contains(palavras, asneiras{j})
+                disp(['-> Palavra agressiva encontrada: ', asneiras{j}]);
                 encontrou_agressividade = true;
                 break;
             end
         end
         
+        if ~encontrou_agressividade
+            % Verificar palavras individuais no filtro
+            for j = 1:length(palavras_individuais)
+                if membro(filtro, palavras_individuais{j}, k) && ismember(palavras_individuais{j}, asneiras)
+                    disp(['-> Palavra agressiva encontrada: ', palavras_individuais{j}]);
+                    encontrou_agressividade = true;
+                    break;
+                end
+            end
+        end
+        
         if encontrou_agressividade
             total_agressivos = total_agressivos + 1;
-        else
             count = count + 1;
             mensagens_suspeitas{count} = textos{i}; % Adicionar mensagem à lista de resultados
-            disp('-> Palavra suspeita');
+        else
+            disp('-> Palavra agressiva não encontrada');
         end
     end
     
@@ -89,4 +102,5 @@ function palavras = readFile(filename)
     % Separar em palavras, removendo espaços e quebras de linha
     palavras = strsplit(linhas, '\n');
     palavras = strtrim(palavras); % Remover espaços extras
+    disp(palavras);
 end

@@ -1,13 +1,13 @@
 function results = naive_bayes(messages)
     % Check if the trained model already exists
-    if isfile('trainedModel.mat')
+    if isfile('DataSets/trainedModel.mat')
         disp('Loading trained model...');
-        load('trainedModel.mat', 'Mdl', 'vocabulary');
+        load('DataSets/trainedModel.mat', 'Mdl', 'vocabulary');
     else
         disp('Training new model...');
 
         % Load and parse the JSON dataset
-        filename = 'Dataset_Naive_Bayes.json'; % Adjust this to your JSON file path
+        filename = 'DataSets/Dataset_Naive_Bayes.json'; % Adjust this to your JSON file path
         fid = fopen(filename);
         if fid == -1
             error('Cannot open the file: %s', filename);
@@ -86,7 +86,7 @@ function results = naive_bayes(messages)
         fprintf('F1 Score: %.2f\n', f1Score);
 
         % Save the trained model and vocabulary to a file
-        save('trainedModel.mat', 'Mdl', 'vocabulary');
+        save('DataSets/trainedModel.mat', 'Mdl', 'vocabulary');
     end
 
     % Analyze messages
