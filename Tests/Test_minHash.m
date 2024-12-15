@@ -4,10 +4,10 @@ function Test_minHash()
     addpath('C:\Users\pcdoa\Project-MPEI\DataSets\');
 
     mensagens = {
-        "Faggot fag fag. Gay sex man blowjob. Calm down."
-        "Dude, that would be super creepy, no doubt."
-        "HOLY SHIT. Screw that band."
-        "Today is a beautiful day"
+        "Ill save you the trouble sister. Here comes a big ol fuck France block coming your way here on the twitter."
+        " Im dead serious.Real athletes never cheat don't even have the appearance of at his level. Fuck him dude seriously  I think he did"
+        "nigga u geigh lmao! fuck yo finals beeeeeitch"
+        "mangualde viseu"
     };
 
     caminho_json_treino = 'DataSets/aggressive_texts.json';
@@ -15,6 +15,7 @@ function Test_minHash()
     % (1) MinHash
     mensagens_sem_similaridade = minHash(mensagens, caminho_json_treino);
 
+    disp('Mensagens sem similaridade');
     for i = 1:length(mensagens_sem_similaridade)
         disp(mensagens_sem_similaridade{i});
     end
