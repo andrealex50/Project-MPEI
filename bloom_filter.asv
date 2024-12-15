@@ -2,10 +2,12 @@ function mensagens_suspeitas = bloom_filter(mensagens_analisar)
     asneiras = readFile('en.txt');
     
     m = length(asneiras);        % número de linhas do en.txt
-    p_fp = 0.01;    % probabilidade desejada de falsos positivos
+    p_fp = 0.008;    % probabilidade desejada de falsos positivos
     n = ceil((-m * log(p_fp)) / (0.693^2));   % número de bits do filtro
-    n = 2^nextpow2(n);      % para melhor eficiência computacional
     k = round((n * 0.693) / m);      % número de funções de dispersão  
+    
+    disp(n)
+    disp(k)
 
     % (1)
     filtro = inicializar(n);
