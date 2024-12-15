@@ -1,126 +1,137 @@
-function mensagens_sem_similaridade = minHash(mensagens, caminho_json_treino)
-    % Carregar os arquivos
-    % Ler o arquivo JSON contendo as mensagens de treino
-    json_data = fileread(caminho_json_treino);
-    mensagens_treino_struct = jsondecode(json_data);
-    mensagens_treino = {mensagens_treino_struct.content}'; % Extrair os textos das mensagens
+function not_similar_messages = minHash(messages_to_analyze, json_filename)
+    % Shingle length (n-grams)
+    shingle_length = 2;  % For example, create 2-grams
 
-    limiar_similaridade = 0.7;
-    k = 100; % Número de funções de dispersão
+    % Read the JSON file (training dataset)
+    raw_data = fileread(json_filename);
+    messages = jsondecode(raw_data);
 
-    % Gerar assinaturas para mensagens suspeitas
-    num_mensagens = length(mensagens);
-    assinaturas_suspeitas = zeros(num_mensagens, k);
-    for idx = 1:num_mensagens
-        texto_mensagem = mensagens{idx};
-        if ischar(texto_mensagem) || isstring(texto_mensagem)
-            texto_mensagem = lower(char(texto_mensagem)); % Normalizar o texto
-
-            % Gerar shingles
-            shingles = gerar_shingles(texto_mensagem);
-
-            % Gerar assinatura MinHash
-            assinaturas_suspeitas(idx, :) = calcular_minHash(shingles, k);
-            disp(['MinHash Signature for message ', num2str(idx), ': ', num2str(assinaturas_suspeitas(idx, :))]);
-        end
+    % Extract the content of each training message
+    num_messages = length(messages);
+    training_contents = cell(1, num_messages);
+    for i = 1:num_messages
+        training_contents{i} = messages(i).content;
     end
 
-    % Gerar assinaturas para mensagens de treino
-    num_treino = length(mensagens_treino);
-    assinaturas_treino = zeros(num_treino, k);
-    for idx = 1:num_treino
-        texto_mensagem = mensagens_treino{idx};
-        if ischar(texto_mensagem) || isstring(texto_mensagem)
-            texto_mensagem = lower(char(texto_mensagem)); % Normalizar o texto
+    % Initialize list for not similar messages
+    not_similar_messages = {};
 
-            % Gerar shingles
-            shingles = gerar_shingles(texto_mensagem);
+    % Tokenize and generate shingles for each message to analyze
+    % Preprocess all messages to analyze at once
+    analyzed_signatures = cell(1, length(messages_to_analyze));
+    for idx = 1:length(messages_to_analyze)
+        input_message = messages_to_analyze{idx};
 
-            % Gerar assinatura MinHash
-            assinaturas_treino(idx, :) = calcular_minHash(shingles, k);
-            disp(['MinHash Signature for training message ', num2str(idx), ': ', num2str(assinaturas_treino(idx, :))]);
-        end
+        % Tokenize the input message (remove punctuation before tokenizing)
+        input_message_cleaned = regexprep(input_message, '[^\w\s]', '');  % Remove punctuation
+        input_tokens = unique(strsplit(lower(input_message_cleaned)));  % Tokenize and make lowercase
+
+        % Generate shingles for the input message
+        input_shingles = generate_shingles(input_tokens, shingle_length);
+
+        % Number of hash functions
+        num_hashes = 200;
+
+        % Generate MinHash signature for the input message shingles
+        analyzed_signatures{idx} = minhash_signature(input_shingles, num_hashes);
     end
 
-    % Calcular similaridade entre assinaturas suspeitas e de treino
-    similaridades = zeros(num_mensagens, num_treino);
-    mensagens_com_similaridade = {};
-    mensagens_sem_similaridade = {};
-    for i = 1:num_mensagens
-        max_similaridade = 0; % Inicializar o valor máximo de similaridade
-        for j = 1:num_treino
-            similaridade = calcular_similaridade(assinaturas_suspeitas(i, :), assinaturas_treino(j, :));
-            similaridades(i, j) = similaridade;
-            if similaridade > limiar_similaridade
-                mensagens_com_similaridade{end+1} = mensagens{i};
+    % Compare each message to analyze with the training set in a more efficient way
+    for idx = 1:length(messages_to_analyze)
+        input_signature = analyzed_signatures{idx};
+        input_message = messages_to_analyze{idx};
+
+        % Initialize variable to track if the message is similar
+        is_similar = false;
+
+        % Compare the input message with each message in the training dataset
+        for i = 1:num_messages
+            % Tokenize each training message (remove punctuation before tokenizing)
+            training_message_cleaned = regexprep(training_contents{i}, '[^\w\s]', '');  % Remove punctuation
+            training_tokens = unique(strsplit(lower(training_message_cleaned)));  % Tokenize and make lowercase
+
+            % Generate shingles for the training message
+            training_shingles = generate_shingles(training_tokens, shingle_length);
+
+            % Generate MinHash signature for the training message shingles
+            training_signature = minhash_signature(training_shingles, num_hashes);
+
+            % Compute the Jaccard similarity between the input and training message
+            similarity = jaccard_similarity(input_signature, training_signature);
+
+            % If similarity is greater than 0.5, mark the message as similar and break early
+            if similarity > 0.5
+                is_similar = true;
+                break;  % No need to check further once we find a similar message
             end
-            max_similaridade = max(max_similaridade, similaridade); % Atualizar o valor máximo
         end
-        % Exibir a mensagem e o valor máximo de similaridade encontrado
-        disp(['Mensagem: ', mensagens{i}]);
-        disp(['Maior similaridade: ', num2str(max_similaridade)]);
-    end
 
-    % Converter mensagens para strings manualmente (sem usar cellfun)
-    mensagens_str = cell(1, num_mensagens);
-    for i = 1:num_mensagens
-        mensagens_str{i} = char(mensagens{i});
-    end
+        % Display the similarity for the message
+        fprintf('Analyzed message: "%s"\n', input_message);
+        fprintf('Max Similarity Index: %.4f\n\n', similarity);
 
-    mensagens_com_similaridade_str = cell(1, length(mensagens_com_similaridade));
-    for i = 1:length(mensagens_com_similaridade)
-        mensagens_com_similaridade_str{i} = char(mensagens_com_similaridade{i});
-    end
-
-    % Determinar mensagens sem similaridade
-    mensagens_sem_similaridade_str = setdiff(mensagens_str, mensagens_com_similaridade_str, 'stable');
-
-    % Recuperar mensagens originais
-    mensagens_sem_similaridade = {};
-    for i = 1:num_mensagens
-        if ismember(char(mensagens{i}), mensagens_sem_similaridade_str)
-            mensagens_sem_similaridade{end+1} = mensagens{i};
+        % Categorize the message based on similarity
+        if ~is_similar
+            % If it's not similar to any training messages, add to not_similar_messages
+            not_similar_messages{end+1} = input_message;
         end
+    end
+
+    % Display the most not similar messages
+    fprintf('Top not similar messages (Similarity <= 0.5):\n');
+    for i = 1:length(not_similar_messages)
+        disp(not_similar_messages{i});
+        fprintf('\n');
     end
 end
 
-% Função para gerar shingles (n-grams)
-function shingles = gerar_shingles(texto)
-    % Tokenizar texto e criar shingles
-    tokens = lower(strsplit(texto));
+
+% Function to generate shingles (n-grams) from tokens
+function shingles = generate_shingles(tokens, shingle_length)
+    num_tokens = length(tokens);
     shingles = {};
-    for i = 1:(length(tokens) - 1) % Gerar bigrams (shingles de 2 palavras)
-        shingles{end+1} = strjoin(tokens(i:i+1));
-    end
-end
-
-% Função para calcular assinaturas MinHash
-function assinaturas = calcular_minHash(shingles, k)
-    % Inicializar assinaturas com infinito
-    assinaturas = inf(1, k);
     
-    % Funções de dispersão (hashes)
-    a = randi([1, 2^32-1], 1, k); 
-    b = randi([0, 2^32-1], 1, k); 
-
-    % Gerar assinatura MinHash
-    for i = 1:length(shingles)
-        shingle_hash = string2hash(shingles{i}); % Hash do shingle
-        for j = 1:k
-            hash_value = mod(a(j) * shingle_hash + b(j), 2^32);
-            assinaturas(j) = min(assinaturas(j), hash_value);
-        end
+    for i = 1:(num_tokens - shingle_length + 1)
+        % Create a shingle by joining a subsequence of tokens
+        shingle = strjoin(tokens(i:(i + shingle_length - 1)));
+        shingles{end + 1} = shingle;
     end
-    disp(['Generated MinHash Signature: ', num2str(assinaturas)]);
 end
 
-% Função para calcular similaridade entre assinaturas
-function similaridade = calcular_similaridade(assinatura1, assinatura2)
-    similaridade = sum(assinatura1 == assinatura2) / length(assinatura1);
-    disp(['Calculated similarity: ', num2str(similaridade)]);
+% Function to generate MinHash signature for a set of shingles
+function signature = minhash_signature(shingles, num_hashes)
+    signature = inf(1, num_hashes); % Initialize signature array with large values
+
+    % Generate the signature using hash functions
+    for i = 1:num_hashes
+        min_hash = inf;  % Start with a large value for the min_hash
+
+        % Apply the hash function to each shingle
+        for j = 1:length(shingles)
+            hash_val = hash_function(shingles{j}, i); % Apply a different seed for each hash
+            min_hash = min(min_hash, hash_val);  % Keep track of the minimum hash value
+        end
+
+        % Store the minimum hash value for this hash function
+        signature(i) = min_hash; % Ensure a scalar value is assigned
+    end
 end
 
-% Função para gerar um hash a partir de uma string
-function hash = string2hash(str)
-    hash = mod(sum(double(char(str))), 2^32);
+% Hash function (MD5 based) to hash the tokens with a given seed
+function hash_val = hash_function(token, seed)
+    % Convert the token and seed to a string and hash it
+    hash_input = strcat(num2str(seed), token);
+    hash_output = java.security.MessageDigest.getInstance('MD5');
+    hash_output.update(uint8(hash_input), 0, length(hash_input));
+    hash_bytes = hash_output.digest();
+
+    % Convert the hash to a large integer (ensuring it's a scalar value)
+    hash_val = typecast(uint8(hash_bytes), 'uint32');
+    hash_val = hash_val(1); % Ensure we are only taking the first element if it's an array
+end
+
+% Function to compute the Jaccard similarity from two MinHash signatures
+function similarity = jaccard_similarity(signature1, signature2)
+    % Compare the signatures by counting the number of matches
+    similarity = sum(signature1 == signature2) / length(signature1);
 end
