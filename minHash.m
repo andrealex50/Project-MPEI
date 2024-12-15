@@ -66,7 +66,7 @@ function mensagens_sem_similaridade = minHash(mensagens, caminho_json_treino)
 
     % Exibir resultados
     disp('Similaridades entre mensagens analisadas e mensagens de treino:');
-    disp(similaridades);
+    %disp(similaridades);
 end
 
 % Função para gerar shingles

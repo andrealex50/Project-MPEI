@@ -1,4 +1,4 @@
-function resultados = bloom_filter(mensagens_suspeitas)
+function mensagens_agressivas = bloom_filter(mensagens_suspeitas)
     n = 8000;   % número de bits do filtro
     m = 100;    % número de elementos do conjunto
     k = 3;      % número de funções de dispersão  
@@ -15,7 +15,10 @@ function resultados = bloom_filter(mensagens_suspeitas)
     % (2) Carregar os textos (mensagens) para análise
     textos = readFile(mensagens_suspeitas); % Substitua com o caminho do seu arquivo
      
-    resultados = zeros(1, length(textos));
+    % Preallocate cell array for aggressive messages
+    mensagens_agressivas = cell(1, length(textos));
+    count = 0;
+    total_agressivos = 0; % Total number of aggressive messages
 
     for i = 1:length(textos)
         disp(['Analisando texto ', num2str(i), ': ', textos{i}]);
@@ -29,38 +32,26 @@ function resultados = bloom_filter(mensagens_suspeitas)
             if membro(filtro, palavras{j}, k)
                 disp(['-> Palavra agressiva encontrada: ', palavras{j}]);
                 encontrou_agressividade = true;
+                break;
             end
         end
         
-        if ~encontrou_agressividade
+        if encontrou_agressividade
+            count = count + 1;
+            total_agressivos = total_agressivos + 1;
+            mensagens_agressivas{count} = textos{i}; % Adicionar mensagem à lista de resultados
+        else
             disp('-> Palavra suspeita');
         end
     end
     
-    % (3) Estatísticas
-    % Exemplo: determinar a percentagem de textos com palavras agressivas
-    total_agressivos = 0;
-    for i = 1:length(textos)
-        palavras = strsplit(lower(textos{i}), {' ', '.', ','});
-        for j = 1:length(palavras)
-            if membro(filtro, palavras{j}, k)
-                total_agressivos = total_agressivos + 1;
-                break;
-            end
-        end
-
-        % Guardar resultado num vetor binário
-        if encontrou_agressividade
-            resultados(i) = 1;
-        else
-            resultados(i) = 0;
-        end
-    end
+    % Colcar apenas as mensagens agressivas na lista final
+    mensagens_agressivas = mensagens_agressivas(1:count);
     
+    % (3) Estatísticas
     percentagem_agressivos = (total_agressivos / length(textos)) * 100;
     disp(['Percentagem de textos com agressividade identificada: ', num2str(percentagem_agressivos), '%']);
 end
-
 
 function filtro = inicializar(n)
     filtro = zeros(1, n); % Preenche o vetor filtro com zeros
@@ -83,7 +74,6 @@ function is_member = membro(filtro, elemento, k)
         end
     end
 end
-
 
 function palavras = readFile(filename)
     fid = fopen(filename, 'r');
